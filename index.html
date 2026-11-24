@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#087f5b">
+    <meta name="description" content="PWA para adjuntar una ubicación precisa o una zona elegida manualmente a un reporte.">
+
+    <!-- Safari/iOS: la PWA instalada conserva sus permisos por separado. -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="GeoReporte">
+    <link rel="apple-touch-icon" href="./icons/icon-180.png">
+    <link rel="manifest" href="./manifest.json">
+    <link rel="icon" href="./icons/icon-192.png">
+    <link rel="stylesheet" href="./styles.css">
+    <title>GeoReporte · Ubicación consciente</title>
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="./" aria-label="GeoReporte, inicio">
+        <span class="brand__mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" role="img">
+            <path d="M12 21s6-5.35 6-11A6 6 0 0 0 6 10c0 5.65 6 11 6 11Z"/>
+            <circle cx="12" cy="10" r="2.25"/>
+          </svg>
+        </span>
+        <span>GeoReporte</span>
+      </a>
+      <span id="network-status" class="network" role="status">
+        <span class="network__dot"></span>
+        <span id="network-label">En línea</span>
+      </span>
+    </header>
+
+    <main class="shell">
+      <section class="hero" aria-labelledby="page-title">
+        <p class="eyebrow">PRÁCTICA PWA</p>
+        <h1 id="page-title">Geolocalización consciente</h1>
+        <p class="hero__copy">Adjunta coordenadas a un reporte solamente cuando tú lo decidas. Si no deseas compartirlas, siempre puedes elegir una zona manualmente.</p>
+        <div class="privacy-note">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 5 6v5c0 4.6 2.98 8.88 7 10 4.02-1.12 7-5.4 7-10V6l-7-3Z"/><path d="m9 12 2 2 4-4"/></svg>
+          <span>No guardamos ni transmitimos tu ubicación.</span>
+        </div>
+      </section>
+
+      <section class="workspace" aria-label="Formulario de ubicación">
+        <article class="card card--main">
+          <div class="step-heading">
+            <span class="step-number">01</span>
+            <div>
+              <p class="kicker">UBICACIÓN DEL REPORTE</p>
+              <h2>¿Dónde ocurrió?</h2>
+            </div>
+          </div>
+
+          <div id="initial-panel" class="panel">
+            <div class="illustration" aria-hidden="true">⌖</div>
+            <h3>Adjunta tu posición actual</h3>
+            <p>Primero revisaremos el permiso. El aviso de iOS aparecerá únicamente después de que confirmes.</p>
+            <button id="start-location" class="button button--primary" type="button">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3"/></svg>
+              Adjuntar mi ubicación
+            </button>
+            <button class="text-button js-manual" type="button">Prefiero elegir una zona</button>
+          </div>
+
+          <div id="consent-panel" class="panel panel--notice" hidden>
+            <div class="notice-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M12 21s6-5.35 6-11A6 6 0 0 0 6 10c0 5.65 6 11 6 11Z"/><circle cx="12" cy="10" r="2.1"/></svg>
+            </div>
+            <div>
+              <p class="kicker">ANTES DE CONTINUAR</p>
+              <h3>¿Para qué usaremos tu ubicación?</h3>
+              <p>La usaremos para adjuntar las coordenadas y evaluar su margen de error. No se consultará en segundo plano.</p>
+              <ul class="check-list">
+                <li>Una sola lectura, iniciada por ti</li>
+                <li>Sin rastreo continuo</li>
+                <li>Opción manual disponible</li>
+              </ul>
+              <div class="button-row">
+                <button id="confirm-location" class="button button--primary" type="button">Sí, compartir ubicación</button>
+                <button class="button button--ghost js-manual" type="button">Usar zona manual</button>
+              </div>
+            </div>
+          </div>
+
+          <div id="loading-panel" class="panel" role="status" hidden>
+            <div class="spinner" aria-hidden="true"></div>
+            <h3>Obteniendo coordenadas…</h3>
+            <p>Puede tomar unos segundos. En una laptop sin GPS la señal puede ser aproximada.</p>
+          </div>
+
+          <div id="result-panel" class="panel" aria-live="polite" hidden>
+            <div class="result-topline">
+              <span class="success-mark" aria-hidden="true">✓</span>
+              <div>
+                <p class="kicker">UBICACIÓN ADJUNTADA</p>
+                <h3 id="result-title">Coordenadas listas</h3>
+              </div>
+            </div>
+            <div id="coordinates-block" class="coordinates">
+              <div><span>LATITUD</span><strong id="latitude">—</strong></div>
+              <div><span>LONGITUD</span><strong id="longitude">—</strong></div>
+            </div>
+            <div id="accuracy-block" class="accuracy">
+              <div class="accuracy__header">
+                <span id="quality-badge" class="badge">—</span>
+                <strong id="accuracy-value">—</strong>
+              </div>
+              <div class="meter" aria-hidden="true"><span id="accuracy-meter"></span></div>
+              <p id="accuracy-help"></p>
+            </div>
+            <p id="manual-summary" class="manual-summary" hidden></p>
+            <button id="change-location" class="button button--ghost button--full" type="button">Cambiar ubicación</button>
+          </div>
+
+          <div id="error-box" class="error-box" role="alert" hidden>
+            <strong>No pudimos obtener tu ubicación</strong>
+            <p id="error-message"></p>
+          </div>
+
+          <form id="manual-panel" class="panel panel--manual" hidden>
+            <div class="step-heading step-heading--small">
+              <span class="manual-icon" aria-hidden="true">⌖</span>
+              <div>
+                <p class="kicker">PLAN B</p>
+                <h3>Selecciona una zona manualmente</h3>
+              </div>
+            </div>
+            <p id="manual-reason" class="form-help">Puedes completar el reporte sin compartir coordenadas.</p>
+            <label for="zone">Zona o ciudad</label>
+            <select id="zone" required>
+              <option value="">Selecciona una opción</option>
+              <option>Ciudad de México</option>
+              <option>Guadalajara</option>
+              <option>Monterrey</option>
+              <option>Puebla</option>
+              <option>Querétaro</option>
+              <option>Otra zona</option>
+            </select>
+            <div id="other-zone-row" hidden>
+              <label for="other-zone">Escribe tu zona</label>
+              <input id="other-zone" type="text" maxlength="80" autocomplete="address-level2" placeholder="Ej. Mérida, Yucatán">
+            </div>
+            <button class="button button--primary button--full" type="submit">Usar esta zona</button>
+            <button id="retry-location" class="text-button" type="button">Volver a intentar con GPS</button>
+          </form>
+        </article>
+
+      </section>
+    </main>
+
+    <!-- El helper siempre debe cargarse antes de la lógica de interfaz. -->
+    <script src="./geo-helper.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>
